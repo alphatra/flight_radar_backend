@@ -15,12 +15,8 @@ public:
         CROW_ROUTE(app, "/tables")
                 ([this](){
                     try {
-                        auto tables = flightService.getTables();
-                        std::ostringstream os;
-                        for (const auto& table : tables) {
-                            os << table << "\n";
-                        }
-                        return crow::response{os.str()};
+                        auto tablesJson = flightService.getTables();
+                        return crow::response{tablesJson.dump()};
                     } catch (const std::exception& e) {
                         return crow::response(500, e.what());
                     }
