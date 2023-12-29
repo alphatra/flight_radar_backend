@@ -5,6 +5,7 @@
 #ifndef BACKEND_FLIGHT_RADAR_FLIGHTSERVICE_H
 #define BACKEND_FLIGHT_RADAR_FLIGHTSERVICE_H
 #include "DbConnector.h"
+#include <nlohmann/json.hpp>
 #include <mysql/mysql.h>
 #include <vector>
 #include <string>
@@ -14,28 +15,26 @@ class FlightService {
 public:
     FlightService(DbConnector& dbConnector) : db(dbConnector) {}
 
-    std::vector<std::string> getTables() {
+    nlohmann::json getTables() {
         MYSQL* conn = db.getConnection();
-        std::vector<std::string> tables;
+        nlohmann::json resultJson;
 
         if (mysql_query(conn, "SHOW TABLES")) {
-            std::cerr << "MySQL query error: " << mysql_error(conn) << std::endl;
-            throw std::runtime_error("Failed to execute query");
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
         }
 
         MYSQL_RES* result = mysql_store_result(conn);
         if (!result) {
-            std::cerr << "MySQL store result error: " << mysql_error(conn) << std::endl;
-            throw std::runtime_error("Failed to store result");
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
         }
 
         MYSQL_ROW row;
         while ((row = mysql_fetch_row(result)) != NULL) {
-            tables.push_back(row[0]);
+            resultJson["tables"].push_back(row[0]);
         }
 
         mysql_free_result(result);
-        return tables;
+        return resultJson;
     }
 
 private:
