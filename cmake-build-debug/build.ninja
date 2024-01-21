@@ -57,6 +57,14 @@ build CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o: CXX_COMPILER__Backend_Flig
   OBJECT_DIR = CMakeFiles/Backend_Flight_Radar.dir
   OBJECT_FILE_DIR = CMakeFiles/Backend_Flight_Radar.dir
 
+build CMakeFiles/Backend_Flight_Radar.dir/DataGenerator.cpp.o: CXX_COMPILER__Backend_Flight_Radar_unscanned_Debug /Users/gracjanziemianski/Desktop/Projekty/Backend_Flight_Radar/DataGenerator.cpp || cmake_object_order_depends_target_Backend_Flight_Radar
+  DEFINES = -DBOOST_DATE_TIME_DYN_LINK -DBOOST_DATE_TIME_NO_LIB
+  DEP_FILE = CMakeFiles/Backend_Flight_Radar.dir/DataGenerator.cpp.o.d
+  FLAGS = -g -std=gnu++17 -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0 -fcolor-diagnostics
+  INCLUDES = -I/usr/local/include -I/opt/homebrew/Cellar/mysql/8.2.0_1/include -isystem /opt/homebrew/include
+  OBJECT_DIR = CMakeFiles/Backend_Flight_Radar.dir
+  OBJECT_FILE_DIR = CMakeFiles/Backend_Flight_Radar.dir
+
 
 # =============================================================================
 # Link build statements for EXECUTABLE target Backend_Flight_Radar
@@ -65,7 +73,7 @@ build CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o: CXX_COMPILER__Backend_Flig
 #############################################
 # Link the executable Backend_Flight_Radar
 
-build Backend_Flight_Radar: CXX_EXECUTABLE_LINKER__Backend_Flight_Radar_Debug CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o | /opt/homebrew/lib/libboost_date_time-mt.dylib /opt/homebrew/lib/libmysqlclient.dylib
+build Backend_Flight_Radar: CXX_EXECUTABLE_LINKER__Backend_Flight_Radar_Debug CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o CMakeFiles/Backend_Flight_Radar.dir/DataGenerator.cpp.o | /opt/homebrew/lib/libboost_date_time-mt.dylib /opt/homebrew/lib/libmysqlclient.dylib
   FLAGS = -g -arch arm64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX14.2.sdk -mmacosx-version-min=14.0
   LINK_LIBRARIES = /opt/homebrew/lib/libboost_date_time-mt.dylib  /opt/homebrew/lib/libmysqlclient.dylib
   OBJECT_DIR = CMakeFiles/Backend_Flight_Radar.dir

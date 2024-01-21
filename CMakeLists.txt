@@ -12,7 +12,9 @@ include_directories(/opt/homebrew/Cellar/mysql/8.2.0_1/include)
 add_executable(Backend_Flight_Radar main.cpp
         DbConnector.h
         FlightService.h
-        FlightController.h)
+        FlightController.h
+        DataGenerator.h
+        DataGenerator.cpp)
 
 # Znajdujemy i linkujemy z biblioteką klienta MySQL
 find_library(MYSQL_LIBRARY NAMES mysqlclient PATHS /opt/homebrew/lib)

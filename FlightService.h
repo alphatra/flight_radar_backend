@@ -37,6 +37,230 @@ public:
         return resultJson;
     }
 
+    nlohmann::json getAllFlights() {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        if (mysql_query(conn, "SELECT * FROM Flights")) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            nlohmann::json flight;
+            flight["flight_id"] = row[0];  // Przykład - dostosuj do struktury twojej tabeli
+            flight["airline"] = row[1];    // Przykład
+            // Dodaj pozostałe pola
+            resultJson["flights"].push_back(flight);
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+    nlohmann::json getFlightsByAirline(const std::string& airlineName) {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        std::string query = "SELECT f.FlightID, f.DepartureTime, f.ArrivalTime, f.Price, f.Status FROM Flights f JOIN Airlines a ON f.AirlineID = a.AirlineID WHERE a.Name = '" + airlineName + "';";
+        if (mysql_query(conn, query.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            nlohmann::json flight;
+            // Uzupełnij odpowiednio do struktury tabeli Flights
+            flight["flight_id"] = row[0];
+            flight["departure_time"] = row[1];
+            flight["arrival_time"] = row[2];
+            flight["price"] = row[3];
+            flight["status"] = row[4];
+            resultJson.push_back(flight);
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+    nlohmann::json getFlightsFromCity(const std::string& cityName) {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        std::string query = "SELECT f.FlightID, a.Name AS Airline, f.DepartureTime, f.Status "
+                            "FROM Flights f "
+                            "JOIN Airlines a ON f.AirlineID = a.AirlineID "
+                            "JOIN Airports ap ON f.OriginAirportID = ap.AirportID "
+                            "WHERE ap.City = '" + cityName + "';";
+        if (mysql_query(conn, query.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            nlohmann::json flight;
+            flight["flight_id"] = row[0];
+            flight["airline"] = row[1];
+            flight["departure_time"] = row[2];
+            flight["status"] = row[3];
+            resultJson.push_back(flight);
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+    nlohmann::json getPassengerInfoForFlight(int flightId) {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        std::string query = "SELECT b.PassengerName, b.BookingTime, f.FlightID "
+                            "FROM Bookings b "
+                            "JOIN Flights f ON b.FlightID = f.FlightID "
+                            "WHERE f.FlightID = " + std::to_string(flightId) + ";";
+
+        if (mysql_query(conn, query.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            nlohmann::json passengerInfo;
+            passengerInfo["passenger_name"] = row[0];
+            passengerInfo["booking_time"] = row[1];
+            passengerInfo["flight_id"] = row[2];
+            resultJson.push_back(passengerInfo);
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+    nlohmann::json createBooking(int flightId, const std::string& seatNumber, const std::string& passengerName) {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        // Sprawdzenie dostępności miejsca
+        std::string checkQuery = "SELECT IsOccupied FROM Seats WHERE FlightID = " + std::to_string(flightId) + " AND SeatNumber = '" + seatNumber + "';";
+        if (mysql_query(conn, checkQuery.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* checkResult = mysql_store_result(conn);
+        MYSQL_ROW row = mysql_fetch_row(checkResult);
+        if (!row || std::stoi(row[0]) == 1) {
+            resultJson["status"] = "error";
+            resultJson["message"] = "Seat is already occupied";
+            mysql_free_result(checkResult);
+            return resultJson;
+        }
+        mysql_free_result(checkResult);
+
+        // Rezerwacja miejsca
+        std::string insertQuery = "INSERT INTO Bookings (FlightID, PassengerName, SeatNumber) VALUES (" + std::to_string(flightId) + ", '" + passengerName + "', '" + seatNumber + "');";
+        if (mysql_query(conn, insertQuery.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        // Zaktualizowanie statusu miejsca
+        std::string updateQuery = "UPDATE Seats SET IsOccupied = 1 WHERE FlightID = " + std::to_string(flightId) + " AND SeatNumber = '" + seatNumber + "';";
+        if (mysql_query(conn, updateQuery.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        resultJson["status"] = "success";
+        resultJson["message"] = "Booking created successfully";
+        return resultJson;
+    }
+
+    nlohmann::json getReservedSeats() {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        std::string query = "SELECT FlightID, SeatNumber, PassengerName FROM Bookings WHERE SeatNumber IS NOT NULL;";
+        if (mysql_query(conn, query.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            nlohmann::json booking;
+            booking["flight_id"] = row[0];
+            booking["seat_number"] = row[1];
+            booking["passenger_name"] = row[2];
+            resultJson.push_back(booking);
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+
+    nlohmann::json getReservedSeatsForFlight(int flightId) {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+        std::string query = "SELECT SeatNumber FROM Seats WHERE FlightID = " + std::to_string(flightId) + " AND IsOccupied = 1;";
+        if (mysql_query(conn, query.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            resultJson.push_back({{"seat_number", row[0]}});
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+
+    nlohmann::json getAvailableSeatsForFlight(int flightId) {
+        MYSQL* conn = db.getConnection();
+        nlohmann::json resultJson;
+
+        std::string query = "SELECT SeatNumber FROM Seats WHERE FlightID = " + std::to_string(flightId) + " AND IsOccupied = 0;";
+        if (mysql_query(conn, query.c_str())) {
+            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_RES* result = mysql_store_result(conn);
+        if (!result) {
+            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+        }
+
+        MYSQL_ROW row;
+        while ((row = mysql_fetch_row(result)) != NULL) {
+            resultJson.push_back({{"seat_number", row[0]}});
+        }
+
+        mysql_free_result(result);
+        return resultJson;
+    }
+
 private:
     DbConnector& db;
 };

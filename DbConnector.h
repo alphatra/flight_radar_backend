@@ -24,6 +24,12 @@ public:
         }
     }
 
+    void executeQuery(const std::string& query) {
+        if (mysql_query(connection, query.c_str())) {
+            throw std::runtime_error(mysql_error(connection));
+        }
+    }
+
     MYSQL* getConnection() {
         return connection;
     }

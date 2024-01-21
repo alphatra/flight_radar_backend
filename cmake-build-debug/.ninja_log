@@ -1,9 +1,16 @@
 # ninja log v5
-6843	7150	1703806201573985673	Backend_Flight_Radar	397c0f4a8898a8c9
+12950	13352	1704722714292594394	Backend_Flight_Radar	dbb20179c8a0e1e
 71	1320	1703797464424925062	CMakeFiles/Backend_Flight_Radar.dir/random_flight.cpp.o	8e5a3171976efe7a
-27	6835	1703806201227009995	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
-0	231	1703863345637922622	build.ninja	7384da5103d4c485
-37	10374	1703863566441771165	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
-10400	12866	1703863569024471252	Backend_Flight_Radar	397c0f4a8898a8c9
-33	10962	1703866252701765132	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
-11000	13544	1703866255357894723	Backend_Flight_Radar	397c0f4a8898a8c9
+27	12927	1704722713755374788	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
+0	231	1705046502756094260	build.ninja	7384da5103d4c485
+15	1242	1704207285586564355	CMakeFiles/Backend_Flight_Radar.dir/DataGenerator.cpp.o	f9653f04878f2f41
+38	6850	1705048813861694641	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
+6862	8884	1705048815924933626	Backend_Flight_Radar	dbb20179c8a0e1e
+36	6599	1705320920569975008	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
+6626	6938	1705320920959012279	Backend_Flight_Radar	dbb20179c8a0e1e
+15	6688	1705321977227015312	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
+6701	6992	1705321977584814262	Backend_Flight_Radar	dbb20179c8a0e1e
+16	7556	1705322233278890323	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
+7561	7854	1705322233624603031	Backend_Flight_Radar	dbb20179c8a0e1e
+61	18002	1705322963300683645	CMakeFiles/Backend_Flight_Radar.dir/main.cpp.o	51d96432ab60b8f8
+18014	20582	1705322965948874528	Backend_Flight_Radar	dbb20179c8a0e1e
