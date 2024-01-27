@@ -101,7 +101,26 @@ public:
                         return crow::response(500, e.what());
                     }
                 });
+                CROW_ROUTE(app, "/flights/fromTo/<string>/<string>")
+                ([this](const std::string& originCity, const std::string& destinationCity) {
+                  try {
+                    auto flightsJson = flightService.getFlightsBetweenCities(originCity, destinationCity);
+                    return crow::response{flightsJson.dump()};
+                  } catch (const std::exception& e) {
+                    return crow::response(500, e.what());
+                  }
+                });
 
+                CROW_ROUTE(app, "/flights/fromToWithinDateRange/<string>/<string>/<string>/<string>")
+                ([this](const std::string& originCity, const std::string& destinationCity, const std::string& startDate, const std::string& endDate) {
+                  try {
+                    auto flightsJson = flightService.getFlightsFromToWithinDateRange(originCity, destinationCity, startDate, endDate);
+                    return crow::response{flightsJson.dump()};
+                  } catch (const std::exception& e) {
+                    return crow::response(500, e.what());
+                  }
+                });
+                
     }
 
 private:
