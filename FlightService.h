@@ -5,7 +5,7 @@
 #ifndef BACKEND_FLIGHT_RADAR_FLIGHTSERVICE_H
 #define BACKEND_FLIGHT_RADAR_FLIGHTSERVICE_H
 #include "DbConnector.h"
-#include <nlohmann/json.hpp>
+#include "json.hpp"
 #include <mysql/mysql.h>
 #include <vector>
 #include <string>
@@ -38,35 +38,50 @@ public:
     }
 
     nlohmann::json getAllFlights() {
-        MYSQL* conn = db.getConnection();
-        nlohmann::json resultJson;
-
-        if (mysql_query(conn, "SELECT * FROM Flights")) {
-            throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
-        }
-
-        MYSQL_RES* result = mysql_store_result(conn);
-        if (!result) {
-            throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
-        }
-
-        MYSQL_ROW row;
-        while ((row = mysql_fetch_row(result)) != NULL) {
-            nlohmann::json flight;
-            flight["flight_id"] = row[0];  // Przykład - dostosuj do struktury twojej tabeli
-            flight["airline"] = row[1];    // Przykład
-            // Dodaj pozostałe pola
-            resultJson["flights"].push_back(flight);
-        }
-
-        mysql_free_result(result);
-        return resultJson;
+    MYSQL* conn = db.getConnection();
+      nlohmann::json resultJson;
+    if (mysql_query(conn, "SELECT f.FlightID, a.Name AS Airline, ao.City AS OriginCity, ad.City AS DestinationCity, f.DepartureTime, f.ArrivalTime, f.Price, f.Status "
+      "FROM Flights f "
+      "JOIN Airlines a ON f.AirlineID = a.AirlineID "
+      "JOIN Airports ao ON f.OriginAirportID = ao.AirportID "
+      "JOIN Airports ad ON f.DestinationAirportID = ad.AirportID;")) {
+      throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
     }
+
+    MYSQL_RES* result = mysql_store_result(conn);
+    if (!result) {
+        throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+      }
+
+      MYSQL_ROW row;
+    while ((row = mysql_fetch_row(result)) != NULL) {
+      nlohmann::json flight;
+        flight["flight_id"] = row[0];
+      flight["airline"] = row[1];
+        flight["origin_city"] = row[2];
+      flight["destination_city"] = row[3];
+        flight["departure_time"] = row[4];
+      flight["arrival_time"] = row[5];
+        flight["price"] = row[6];
+      flight["status"] = row[7];
+        resultJson["flights"].push_back(flight);
+      }
+
+      mysql_free_result(result);
+    return resultJson;
+      }
+
     nlohmann::json getFlightsByAirline(const std::string& airlineName) {
         MYSQL* conn = db.getConnection();
         nlohmann::json resultJson;
 
-        std::string query = "SELECT f.FlightID, f.DepartureTime, f.ArrivalTime, f.Price, f.Status FROM Flights f JOIN Airlines a ON f.AirlineID = a.AirlineID WHERE a.Name = '" + airlineName + "';";
+        std::string query =
+        "SELECT f.FlightID, a.Name AS Airline, ao.City AS OriginCity, ad.City AS DestinationCity, f.DepartureTime, f.ArrivalTime, f.Price, f.Status "
+            "FROM Flights f "
+            "JOIN Airlines a ON f.AirlineID = a.AirlineID "
+            "JOIN Airports ao ON f.OriginAirportID = ao.AirportID "
+            "JOIN Airports ad ON f.DestinationAirportID = ad.AirportID "
+            "WHERE a.Name = '" + airlineName + "';";
         if (mysql_query(conn, query.c_str())) {
             throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
         }
@@ -95,11 +110,13 @@ public:
         MYSQL* conn = db.getConnection();
         nlohmann::json resultJson;
 
-        std::string query = "SELECT f.FlightID, a.Name AS Airline, f.DepartureTime, f.Status "
-                            "FROM Flights f "
-                            "JOIN Airlines a ON f.AirlineID = a.AirlineID "
-                            "JOIN Airports ap ON f.OriginAirportID = ap.AirportID "
-                            "WHERE ap.City = '" + cityName + "';";
+        std::string query =
+        "SELECT f.FlightID, a.Name AS Airline, ad.City AS DestinationCity, f.DepartureTime, f.Status "
+            "FROM Flights f "
+            "JOIN Airlines a ON f.AirlineID = a.AirlineID "
+            "JOIN Airports ao ON f.OriginAirportID = ao.AirportID "
+            "JOIN Airports ad ON f.DestinationAirportID = ad.AirportID "
+            "WHERE ao.City = '" + cityName + "';";
         if (mysql_query(conn, query.c_str())) {
             throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
         }
@@ -260,6 +277,92 @@ public:
         mysql_free_result(result);
         return resultJson;
     }
+    nlohmann::json getFlightsBetweenCities(const std::string& originCity, const std::string& destinationCity) {
+      MYSQL* conn = db.getConnection();
+      nlohmann::json resultJson;
+
+      std::string query = "SELECT f.FlightID, a.Name AS Airline, f.DepartureTime, f.ArrivalTime, f.Price, f.Status "
+                          "FROM Flights f "
+                          "JOIN Airlines a ON f.AirlineID = a.AirlineID "
+                          "JOIN Airports ao ON f.OriginAirportID = ao.AirportID "
+                          "JOIN Airports ad ON f.DestinationAirportID = ad.AirportID ";
+
+      bool whereClauseAdded = false;
+      if (!originCity.empty()) {
+        query += "WHERE ao.City = '" + originCity + "' ";
+        whereClauseAdded = true;
+      }
+      if (!destinationCity.empty()) {
+        query += (whereClauseAdded ? "AND " : "WHERE ") + std::string("ad.City = '") + destinationCity + "'";
+      }
+
+      if (mysql_query(conn, query.c_str())) {
+        throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+      }
+
+      MYSQL_RES* result = mysql_store_result(conn);
+      if (!result) {
+        throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+      }
+
+      MYSQL_ROW row;
+      while ((row = mysql_fetch_row(result)) != NULL) {
+        nlohmann::json flight;
+        // Uzupełnij odpowiednio do struktury tabeli Flights
+        flight["flight_id"] = row[0];
+        flight["airline"] = row[1];
+        flight["departure_time"] = row[2];
+        flight["arrival_time"] = row[3];
+        flight["price"] = row[4];
+        flight["status"] = row[5];
+        resultJson.push_back(flight);
+    }
+
+    mysql_free_result(result);
+    return resultJson;
+}
+    nlohmann::json getFlightsFromToWithinDateRange(const std::string& originCity, const std::string& destinationCity, const std::string& startDate, const std::string& endDate) {
+    MYSQL* conn = db.getConnection();
+    nlohmann::json resultJson;
+
+    std::string query = "SELECT f.FlightID, a.Name AS Airline, ao.City AS OriginCity, ad.City AS DestinationCity, f.DepartureTime, f.ArrivalTime, f.Price, f.Status "
+                        "FROM Flights f "
+                        "JOIN Airlines a ON f.AirlineID = a.AirlineID "
+                        "JOIN Airports ao ON f.OriginAirportID = ao.AirportID "
+                        "JOIN Airports ad ON f.DestinationAirportID = ad.AirportID "
+                        "WHERE ao.City = '" + originCity + "' AND ad.City = '" + destinationCity + "' "
+                        "AND f.DepartureTime >= '" + startDate + "' AND f.DepartureTime <= '" + endDate + "' "
+                        "AND f.ArrivalTime >= '" + startDate + "' AND f.ArrivalTime <= '" + endDate + "';";
+
+    if (mysql_query(conn, query.c_str())) {
+        throw std::runtime_error("Failed to execute query: " + std::string(mysql_error(conn)));
+    }
+
+    MYSQL_RES* result = mysql_store_result(conn);
+    if (!result) {
+        throw std::runtime_error("Failed to store result: " + std::string(mysql_error(conn)));
+    }
+
+    MYSQL_ROW row;
+    while ((row = mysql_fetch_row(result)) != NULL) {
+        nlohmann::json flight;
+        flight["flight_id"] = row[0];
+        flight["airline"] = row[1];
+        flight["origin_city"] = row[2];
+        flight["destination_city"] = row[3];
+        flight["departure_time"] = row[4];
+        flight["arrival_time"] = row[5];
+        flight["price"] = row[6];
+        flight["status"] = row[7];
+        resultJson.push_back(flight);
+    }
+
+    mysql_free_result(result);
+    return resultJson;
+}
+
+
+
 
 private:
     DbConnector& db;
